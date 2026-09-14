@@ -40,7 +40,7 @@ npm test
 npm start
 ```
 
-默认服务端地址：`ws://127.0.0.1:8787/ws`。
+默认服务端地址：`wss://maizi.fun/ws`。
 
 ## Docker 部署
 

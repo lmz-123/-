@@ -1,6 +1,6 @@
 App({
   globalData: {
-    socketUrl: 'ws://127.0.0.1:8787/ws',
+    socketUrl: 'wss://maizi.fun/ws',
     playerId: '',
     nickname: '',
   },
