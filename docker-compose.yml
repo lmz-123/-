@@ -1,0 +1,11 @@
+services:
+  wechat-dice:
+    build:
+      context: ./server
+    container_name: wechat-dice
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8787
+    ports:
+      - "127.0.0.1:8787:8787"

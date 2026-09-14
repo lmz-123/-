@@ -42,6 +42,31 @@ npm start
 
 默认服务端地址：`ws://127.0.0.1:8787/ws`。
 
+## Docker 部署
+
+服务器已经安装 Docker 时，可以直接在项目根目录执行：
+
+```bash
+cd /opt/wechat-dice
+docker compose up -d --build
+docker compose ps
+docker compose logs -f wechat-dice
+```
+
+容器只把服务绑定到服务器本机的 `127.0.0.1:8787`，适合让 Nginx 在外层提供 HTTPS/WSS。检查服务：
+
+```bash
+curl http://127.0.0.1:8787/health
+```
+
+更新代码：
+
+```bash
+cd /opt/wechat-dice
+git pull --ff-only origin main
+docker compose up -d --build
+```
+
 然后用微信开发者工具导入 `wechat-dice` 目录。开发阶段 `project.config.json` 已关闭域名校验：
 
 - 开发者工具模拟器一般可以直接连 `127.0.0.1`。
