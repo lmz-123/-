@@ -1,0 +1,123 @@
+<view class="page-shell">
+  <view wx:if="{{screen === 'home'}}" class="home-screen">
+    <view class="brand-mark">♠</view>
+    <view class="eyebrow">LIAR'S DICE / ONLINE</view>
+    <view class="hero-title">一起摇，<text>一起猜。</text></view>
+    <view class="hero-subtitle">骰子盖住时各看各的，谁喊“开”，所有人的骰子同时亮出来。</view>
+
+    <view class="home-card">
+      <view class="field-label">你的昵称</view>
+      <input class="text-input" maxlength="16" value="{{nickname}}" bindinput="onNicknameInput" placeholder="例如：小林" placeholder-class="placeholder" />
+      <button class="primary-button" loading="{{connecting}}" bindtap="createRoom">创建房间</button>
+      <view class="split-line"><text>加入朋友的房间</text></view>
+      <view class="field-label">房间号</view>
+      <input class="text-input room-input" maxlength="6" value="{{roomInput}}" bindinput="onRoomInput" placeholder="输入 6 位房间号" placeholder-class="placeholder" />
+      <button class="secondary-button" loading="{{connecting}}" bindtap="joinRoom">加入房间</button>
+      <view wx:if="{{error}}" class="error-text">{{error}}</view>
+    </view>
+
+    <view class="how-row">
+      <view><text class="how-number">01</text><text>进房间</text></view>
+      <view><text class="how-number">02</text><text>摇 5 个骰子</text></view>
+      <view><text class="how-number">03</text><text>猜或开盖</text></view>
+    </view>
+    <view class="footer-note">简单的异地吹牛骰子房间，先支持 2–8 人</view>
+  </view>
+
+  <view wx:if="{{screen === 'room'}}" class="room-screen">
+    <view class="room-topbar">
+      <button class="back-button" bindtap="leaveRoom">‹ <text>退出</text></button>
+      <view class="room-code-box" bindtap="copyRoomCode"><text class="room-code-label">ROOM</text><text class="room-code">{{roomCode}}</text><text class="copy-label">复制</text></view>
+      <view class="live-dot {{connected ? 'is-live' : ''}}"></view>
+    </view>
+
+    <view class="phase-panel">
+      <view class="eyebrow">{{phase === 'waiting' ? 'WAITING ROOM' : (phase === 'playing' ? 'YOUR TURN?' : 'REVEAL')}}</view>
+      <view class="phase-title">{{phaseTitle}}</view>
+      <view class="phase-hint">{{phaseHint}}</view>
+    </view>
+
+    <view class="player-strip">
+      <view wx:for="{{players}}" wx:key="id" class="player-chip {{item.isMe ? 'mine' : ''}}">
+        <view class="avatar">{{item.initial}}</view>
+        <view class="player-chip-main"><text class="player-name">{{item.nickname}}{{item.isMe ? '（我）' : ''}}</text><text class="player-status">{{item.online ? (item.isTurn ? '正在行动' : (item.inRound ? '本局玩家' : '在房间')) : '离线'}}</text></view>
+        <text wx:if="{{item.isTurn}}" class="turn-mark">●</text>
+      </view>
+    </view>
+
+    <view wx:if="{{phase === 'waiting'}}" class="waiting-card">
+      <view class="waiting-number">{{roomCode}}</view>
+      <view class="waiting-copy">把房间号发给朋友<br />大家进来后，房主点击开始</view>
+      <button class="secondary-button small-button" bindtap="copyRoomCode">复制房间号</button>
+      <button wx:if="{{isHost}}" class="primary-button small-button" bindtap="startGame">开始一局</button>
+      <view wx:if="{{!isHost}}" class="host-note">等待房主开始游戏</view>
+    </view>
+
+    <view wx:if="{{phase === 'playing'}}" class="playing-section">
+      <view class="private-card">
+        <view class="card-kicker">只有你能看到</view>
+        <view class="private-title">你的骰子</view>
+        <view class="dice-row">
+          <view wx:for="{{myDice}}" wx:key="*this" class="die-face">
+            <view wx:for="{{item.pips}}" wx:key="*this" class="pip pip-{{item}}"></view>
+          </view>
+        </view>
+        <view class="private-copy">别人现在只能看到你已在本局，开盖后所有人的骰子会一起出现。</view>
+      </view>
+
+      <view class="bid-card">
+        <view class="bid-label">桌面上的猜法</view>
+        <view wx:if="{{currentBid}}" class="current-bid"><text class="bid-count">{{currentBid.count}}</text><text>个</text><text class="bid-face">{{currentBid.face}}</text><text>点</text><text class="bid-by">{{currentBid.nickname}}</text></view>
+        <view wx:if="{{!currentBid}}" class="empty-bid">还没有人开始喊</view>
+        <view wx:if="{{turnPlayerId === '' || turnPlayerId === undefined}}" class="turn-hint">等待房间同步</view>
+        <view wx:if="{{turnPlayerId !== '' && turnPlayerId !== undefined && !isMyTurn}}" class="turn-hint">轮到 {{turnName}} 了</view>
+        <view wx:if="{{isMyTurn}}" class="your-turn-label">轮到你：叫更大的，或者直接开盖</view>
+
+        <view wx:if="{{isMyTurn}}" class="bid-controls">
+          <input class="bid-input count-input" maxlength="2" type="number" value="{{bidCount}}" bindinput="onBidCountInput" placeholder="几" placeholder-class="bid-placeholder" />
+          <text class="bid-unit">个</text>
+          <input class="bid-input face-input" maxlength="1" type="number" value="{{bidFace}}" bindinput="onBidFaceInput" placeholder="几" placeholder-class="bid-placeholder" />
+          <text class="bid-unit">点</text>
+        </view>
+        <view wx:if="{{isMyTurn}}" class="action-row">
+          <button class="primary-button bid-button" bindtap="submitBid">叫这个</button>
+          <button class="open-button" bindtap="openLid">开盖</button>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{phase === 'revealed' && result}}" class="reveal-section">
+      <view class="reveal-banner">
+        <view class="card-kicker">ALL OPEN</view>
+        <view class="reveal-title">{{result.winnerNickname}} 获胜</view>
+        <view class="reveal-copy">{{result.openerNickname}} 开盖 · 猜的是 {{result.bid.count}} 个 {{result.bid.face}} 点</view>
+        <view class="truth-line">桌面实际有 <text>{{result.actualCount}}</text> 个 {{result.face}} 点，{{result.bidIsCorrect ? '这次猜对了' : '这次猜错了'}}</view>
+      </view>
+      <view class="all-dice-card">
+        <view class="all-dice-title">所有人的骰子</view>
+        <view wx:for="{{result.allDice}}" wx:key="id" class="revealed-player">
+          <view class="revealed-name"><view class="tiny-avatar">{{item.initial}}</view><text>{{item.nickname}}</text></view>
+          <view class="revealed-dice-row">
+            <view wx:for="{{item.dice}}" wx:key="*this" class="tiny-die">
+              <view wx:for="{{item.pips}}" wx:key="*this" class="tiny-pip tiny-pip-{{item}}"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <button wx:if="{{isHost}}" class="primary-button again-button" bindtap="playAgain">再来一局</button>
+      <view wx:if="{{!isHost}}" class="host-note">等待房主开始下一局</view>
+    </view>
+
+    <view class="chat-card">
+      <view class="chat-title">边玩边聊 <text>{{messages.length}} 条</text></view>
+      <scroll-view class="chat-list" scroll-y="true">
+        <view wx:for="{{messages}}" wx:key="id" class="chat-line"><text class="chat-name">{{item.nickname}}</text><text class="chat-text">{{item.text}}</text></view>
+        <view wx:if="{{messages.length === 0}}" class="chat-empty">说点什么，开始这局</view>
+      </scroll-view>
+      <view class="chat-input-row"><input class="chat-input" maxlength="200" value="{{chatInput}}" bindinput="onChatInput" confirm-type="send" bindconfirm="sendChat" placeholder="发消息…" placeholder-class="placeholder" /><button class="chat-send" bindtap="sendChat">发送</button></view>
+    </view>
+
+    <view class="rules-note">规则：轮到你时，叫法必须比上一手更大；觉得不可能就点“开盖”。一旦开盖，所有人的骰子自动亮出。</view>
+    <view wx:if="{{error}}" class="error-text room-error">{{error}}</view>
+  </view>
+</view>

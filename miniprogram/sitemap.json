@@ -1,0 +1,9 @@
+{
+  "desc": "同屏骰局页面索引",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "pages/index/index"
+    }
+  ]
+}
