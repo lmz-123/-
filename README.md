@@ -55,6 +55,8 @@ docker compose logs -f wechat-dice
 
 容器只把服务绑定到服务器本机的 `127.0.0.1:8787`，适合让 Nginx 在外层提供 HTTPS/WSS。检查服务：
 
+Docker 构建阶段默认使用 `https://registry.npmmirror.com` 下载 npm 依赖，并通过 `replace-registry-host` 处理锁文件中原始 npm registry 地址；如果你的服务器能稳定访问官方 npm 源，也可以在构建时覆盖 `NPM_REGISTRY`。
+
 ```bash
 curl http://127.0.0.1:8787/health
 ```

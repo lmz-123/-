@@ -3,7 +3,10 @@ FROM node:22-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev --no-audit
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+RUN npm ci --omit=dev --no-audit \
+    --registry="${NPM_REGISTRY}" \
+    --replace-registry-host=always
 
 COPY src ./src
 
